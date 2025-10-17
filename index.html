@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+  <!-- Main simulated phone viewport for the assistant -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GCET College Assistant</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+    <!-- Collapsible command drawer (chips, profile & history controls, and tool actions) -->
+  <div class="phone-container">
+    <div class="header">
+      <div class="avatar">🎓</div>
+      <div class="header-text">
+        <h1>GCET Assistant</h1>
+        <p>Your college companion</p>
+      </div>
+      <button id="modeToggle" class="mode-toggle" type="button" title="Toggle theme" aria-label="Toggle theme">
+        <span class="mode-icon" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="message bot">
+      <!-- Quick suggestion chips -->
+        <div class="message-bubble">
+          Hi! I'm your GCET College Assistant. I can help with timetables, exam schedules, and study materials. What would you like to know?
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-sheet collapsed" id="bottomSheet">
+      <!-- Message input + voice recording controls -->
+      <div class="drag-handle"></div>
+      <div class="sheet-header">
+        <button type="button" class="history-btn" onclick="toggleHistoryDrawer()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <polyline points="12 7 12 12 16 14" />
+          </svg>
+          Chat History
+        </button>
+        <button type="button" class="profile-btn" onclick="openContextModal()">Update profile</button>
+      </div>
+
+      <div class="chip-row">
+        <button type="button" class="chip" onclick="sendQuickMessage('Show my timetable')">📅 Timetable</button>
+        <button type="button" class="chip" onclick="sendQuickMessage('Exam dates')">📝 Exams</button>
+        <button type="button" class="chip" onclick="sendQuickMessage('Web Technology notes')">📚 Web Technology Notes</button>
+      <!-- Upload + summarise tools -->
+        <button type="button" class="chip" onclick="sendQuickMessage('Question papers')">📄 Question Papers</button>
+      </div>
+
+      <div class="input-row">
+        <button type="button" id="micBtn" class="circle-btn voice-btn" title="Voice input" onclick="toggleVoice()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+            <path d="M19 11v1a7 7 0 0 1-14 0v-1"/>
+            <line x1="12" y1="18" x2="12" y2="22"/>
+            <line x1="9" y1="22" x2="15" y2="22"/>
+          </svg>
+        </button>
+        <div class="input-wrapper">
+          <input type="text" id="messageInput" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)" />
+    <!-- Voice recognition status indicator -->
+          <button type="button" class="circle-btn send-btn" onclick="sendMessage()" title="Send message">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+    <!-- History drawer overlay -->
+      <div class="sheet-tools collapsed" id="sheetTools">
+        <div class="doc-toolbar">
+          <label for="docUpload" class="doc-action-btn upload-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7b3ff2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><polyline points="7 9 12 4 17 9"/><line x1="12" y1="4" x2="12" y2="16"/></svg>
+            <span>Upload</span>
+            <input type="file" id="docUpload" accept=".pdf,.doc,.docx" onchange="handleDocUpload(event)" hidden />
+          </label>
+          <button type="button" class="doc-action-btn summarise-btn" id="summariseBtn" onclick="summariseDocument()">Summarise</button>
+        </div>
+        <div class="doc-status" id="docStatus">No document uploaded yet.</div>
+      </div>
+
+    </div>
+
+    <div id="voiceStatusBox" class="voice-status-box hidden">
+      <div class="voice-status-heading">Voice input</div>
+      <div class="voice-status-text" id="voiceStatus">Inactive</div>
+      <button type="button" class="pill-btn" onclick="toggleVoice()">Toggle</button>
+    </div>
+
+    <!-- Chat History Drawer -->
+    <div class="history-drawer hidden" id="historyDrawer" onclick="closeHistoryOnBackdrop(event)">
+      <div class="history-container" onclick="event.stopPropagation()">
+        <div class="history-header">
+          <h3>Chat History</h3>
+          <button type="button" class="close-history-chip" onclick="toggleHistoryDrawer()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Close
+          </button>
+        </div>
+        <div class="history-content" id="historyContent">
+          <p class="history-empty">No chat history yet</p>
+        </div>
+        <div class="history-footer">
+          <button type="button" class="clear-history-btn" onclick="clearChatHistory()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Clear All History
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context (branch/sem/batch) Modal -->
+  <div class="context-modal hidden" id="contextModal">
+    <div class="modal-content">
+      <div class="modal-intro">
+        <div class="modal-icon">🎓</div>
+        <div>
+          <h2>Set up your profile</h2>
+          <p>Choose your programme details so I can tailor answers to your timetable and materials.</p>
+        </div>
+      </div>
+      <div class="modal-form">
+        <div class="form-group">
+          <label for="branchSelect">Branch</label>
+          <select id="branchSelect">
+            <option value="CSE">Computer Science (CSE)</option>
+            <option value="ECE">Electronics & Communication (ECE)</option>
+            <option value="ME">Mechanical Engineering (ME)</option>
+            <option value="CE">Civil Engineering (CE)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="semesterSelect">Semester</label>
+          <select id="semesterSelect">
+            <option value="1">1st Semester</option>
+            <option value="2">2nd Semester</option>
+            <option value="3">3rd Semester</option>
+            <option value="4">4th Semester</option>
+            <option value="5">5th Semester</option>
+            <option value="6">6th Semester</option>
+            <option value="7">7th Semester</option>
+            <option value="8">8th Semester</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="batchSelect">Batch Year</label>
+          <select id="batchSelect">
+            <option value="2025">Batch 2025</option>
+            <option value="2024">Batch 2024</option>
+            <option value="2023">Batch 2023</option>
+            <option value="2022">Batch 2022</option>
+            <option value="2021">Batch 2021</option>
+            <option value="2020">Batch 2020</option>
+          </select>
+        </div>
+      </div>
+      <button class="submit-btn" onclick="saveContext()">Save</button>
+    </div>
+  </div>
+
+  <!-- PDF Preview Modal -->
+  <div class="context-modal hidden" id="previewModal">
+    <div class="modal-content" style="max-width: 95%; width: 95%; height: 80vh;">
+      <div style="display:flex; align-items:center; margin-bottom:8px;">
+        <h2 style="flex:1; font-size:16px; margin:0;">Preview</h2>
+        <button class="btn-small" onclick="closePreview()">Close</button>
+      </div>
+      <iframe id="previewFrame" title="PDF Preview" style="width:100%; height:calc(100% - 36px); border:1px solid #eee; border-radius:8px;"></iframe>
+    </div>
+  </div>
+
+  <script src="./script.js" defer></script>
+</body>
+</html>
